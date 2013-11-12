@@ -29,67 +29,57 @@ main:
 		; Get input character
 			xor ah, ah
 			int 0x16
+		call load_pos
 		; Parse input
 			cmp al, 'd'
 			jne .check_w
 			; Ok, we pressed D
-				xor eax, eax
-				call load_pos
 				inc bh
 				inc al
-				call save_pos
 			jmp .next_stuff
 
 		.check_w:
 			cmp al, 'w'
 			jne .check_s
 			; Ok, we pressed D
-				xor eax, eax
-				call load_pos
 				dec bl
 				inc al
-				call save_pos
 			jmp .next_stuff
 
 		.check_s:
 			cmp al, 's'
 			jne .check_a
 			; Ok, we pressed D
-				xor eax, eax
-				call load_pos
 				inc bl
 				inc al
-				call save_pos
 			jmp .next_stuff
 
 		.check_a:
 			cmp al, 'a'
 			jne .next_stuff
 			; Ok, we pressed D
-				xor eax, eax
-				call load_pos
 				dec bh
 				inc al
-				call save_pos
 			jmp .next_stuff
 
 
 		.next_stuff:
+		call save_pos
 		; See where we are, and add new snake node
 		; finally print snake
 			call print_snake
 		jmp .gameloop
 
 load_pos:
-	mov al, [current_node]
+	mov cl, [current_node]
 	mov edi, 0x9000
-	mov bh, [edi + eax]
-	mov bl, [edi + eax + 0x90]
+	mov bh, [edi + ecx]
+	mov bl, [edi + ecx + 0x90]
 	ret
 save_pos:
-	mov [current_node], al
-	mov byte [edi + eax], bh
-	mov byte [edi + eax + 0x90], bl
+	mov [current_node], cl
+	mov byte [edi + ecx], bh
+	mov byte [edi + ecx + 0x90], bl
 	ret
 
 ; ##########################
