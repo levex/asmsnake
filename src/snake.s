@@ -21,6 +21,7 @@ main:
 	mov byte [current_node], 0x0
 	mov byte [edi], 0x28
 	mov byte [edi + 0x90], 0xC
+	call add_fruit
 	call print_snake
 
 
@@ -30,6 +31,7 @@ main:
 		; Get input character
 			xor ah, ah
 			int 0x16
+			inc byte [moves]
 		call load_pos
 		; Parse input
 			cmp al, 'd'
@@ -67,11 +69,11 @@ main:
 			jne .next_stuff_2
 				.fruit_step:
 				add byte [snake_size], 1
+				call add_fruit
 		.next_stuff_2:
 		call save_pos
 		; add fruit
 			call clear_vidmem
-			call add_fruit
 		; finally print snake
 			xor eax, eax
 			mov al, [current_node]
@@ -112,6 +114,30 @@ save_pos:
 	mov [current_node], cl
 	mov byte [edi + ecx], bh
 	mov byte [edi + ecx + 0x90], bl
+	ret
+
+r_next db 0
+
+rng:
+	; AH = RAND_MAX
+	push ebx
+	push ecx
+	push eax
+		cmp byte [moves], ah
+		jge .reset
+		jmp .rest
+		.reset:
+			.loop:
+				cmp byte [moves], ah
+				jle .rest
+				sub byte [moves], ah
+			jmp .loop
+		.rest:
+			mov eax, [moves]
+		mov dh, al
+	pop eax
+	pop ecx
+	pop ebx
 	ret
 
 ; ##########################
@@ -162,10 +188,14 @@ draw_fruit:
 	ret
 
 add_fruit:
-	mov ah, 0x02
-	int 0x1A
-	mov [fruit_x], dh
-	mov [fruit_y], ch
+	push eax
+	push edx
+		call rng
+		mov [fruit_x], dh
+		call rng
+		mov [fruit_y], dh
+	pop edx
+	pop eax
 	ret
 
 clear_vidmem:
@@ -180,6 +210,8 @@ clear_vidmem:
 
 current_node: db 0
 snake_size: db 1
+
+moves: db 0
 
 fruit_x: db 0
 fruit_y: db 0
