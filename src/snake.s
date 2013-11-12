@@ -3,15 +3,9 @@
 main:
 	mov esp, 0x9000
 
-	; Clear video memory
-	mov ecx, 0xfa0
-	mov edi, 0xb8000
-	.clear_vidmem:
-		mov byte [edi + ecx], 0x0
-		mov byte [edi + ecx + 1], 0x0
-		loop .clear_vidmem
+	call clear_vidmem
 
-	mov ecx, 0x80
+	mov ecx, 0xff
 	mov edi, 0x9000
 	.clear:
 		mov byte [edi + ecx], 0xff ; Clear the snake x buffer
@@ -35,39 +29,51 @@ main:
 			jne .check_w
 			; Ok, we pressed D
 				inc bh
-				inc al
 			jmp .next_stuff
 
 		.check_w:
 			cmp al, 'w'
 			jne .check_s
-			; Ok, we pressed D
+			; Ok, we pressed W
 				dec bl
-				inc al
 			jmp .next_stuff
 
 		.check_s:
 			cmp al, 's'
 			jne .check_a
-			; Ok, we pressed D
+			; Ok, we pressed S
 				inc bl
-				inc al
 			jmp .next_stuff
 
 		.check_a:
 			cmp al, 'a'
 			jne .next_stuff
-			; Ok, we pressed D
+			; Ok, we pressed A
 				dec bh
-				inc al
 			jmp .next_stuff
 
 
 		.next_stuff:
+		cmp bh, [fruit_x]
+		jne .next_stuff_2
+			cmp bl, [fruit_y]
+			jne .next_stuff_2
+				.fruit_step:
+				add byte [snake_size], 1
+		.next_stuff_2:
 		call save_pos
-		; See where we are, and add new snake node
+		; add fruit
+			call clear_vidmem
+			call add_fruit
 		; finally print snake
+			xor eax, eax
+			mov al, [current_node]
+			sub al, [snake_size]
+			mov edi, 0x9000
+			mov byte [edi + eax + 0x90], 0xff
+			mov byte [edi + eax], 0xff
 			call print_snake
+			call draw_fruit
 		jmp .gameloop
 
 load_pos:
@@ -77,6 +83,7 @@ load_pos:
 	mov bl, [edi + ecx + 0x90]
 	ret
 save_pos:
+	inc cl
 	mov [current_node], cl
 	mov byte [edi + ecx], bh
 	mov byte [edi + ecx + 0x90], bl
@@ -92,7 +99,7 @@ print_snake:
 	xor ecx, ecx
 	mov edi, 0x9000
 	.print_loop:
-		cmp ecx, 0x80
+		cmp ecx, 0xff
 		je .exit
 		; Print the character
 			; Move cursor
@@ -111,13 +118,46 @@ print_snake:
 				pop ecx
 		; Go to next character
 		inc ecx
-		cmp byte [edi + ecx], 0xff
-		jne .print_loop
+		jmp .print_loop
 	.exit:
 	pop ecx
 	ret
 
+draw_fruit:
+	xor bh, bh
+	mov ah, 0x02
+	mov dh, [fruit_y]
+	mov dl, [fruit_x]
+	int 0x10
+	mov ah, 0x09
+	mov al, 'F'
+	mov bl, 0xdd
+	mov cx, 1
+	int 0x10
+	ret
+
+add_fruit:
+	mov ah, 0x02
+	int 0x1A
+	mov [fruit_x], dh
+	mov [fruit_y], ch
+	ret
+
+clear_vidmem:
+	; Clear video memory
+	mov ecx, 0xfa0
+	mov edi, 0xb8000
+	.clear_vidmem:
+		mov byte [edi + ecx], 0x0
+		mov byte [edi + ecx + 1], 0x0
+		loop .clear_vidmem
+	ret
+
 current_node: db 0
+snake_size: db 1
+
+fruit_x: db 0
+fruit_y: db 0
 
 %assign mysize 510-($-$$)
 %warning my size is mysize
