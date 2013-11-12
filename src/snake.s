@@ -34,15 +34,10 @@ main:
 			jne .check_w
 			; Ok, we pressed D
 				xor eax, eax
-				mov al, [current_node]
-				mov edi, 0x9000
-				mov bh, [edi + eax] ; X pos
-				mov bl, [edi + 0x90 + eax]; Y pos
+				call load_pos
 				inc bh
 				inc al
-				mov [current_node], al
-				mov byte [edi + eax], bh
-				mov byte [edi + eax + 0x90], bl
+				call save_pos
 			jmp .next_stuff
 
 		.check_w:
@@ -50,15 +45,10 @@ main:
 			jne .check_s
 			; Ok, we pressed D
 				xor eax, eax
-				mov al, [current_node]
-				mov edi, 0x9000
-				mov bh, [edi + eax] ; X pos
-				mov bl, [edi + 0x90 + eax]; Y pos
+				call load_pos
 				dec bl
 				inc al
-				mov [current_node], al
-				mov byte [edi + eax], bh
-				mov byte [edi + eax + 0x90], bl
+				call save_pos
 			jmp .next_stuff
 
 		.check_s:
@@ -66,15 +56,10 @@ main:
 			jne .check_a
 			; Ok, we pressed D
 				xor eax, eax
-				mov al, [current_node]
-				mov edi, 0x9000
-				mov bh, [edi + eax] ; X pos
-				mov bl, [edi + 0x90 + eax]; Y pos
+				call load_pos
 				inc bl
 				inc al
-				mov [current_node], al
-				mov byte [edi + eax], bh
-				mov byte [edi + eax + 0x90], bl
+				call save_pos
 			jmp .next_stuff
 
 		.check_a:
@@ -82,15 +67,10 @@ main:
 			jne .next_stuff
 			; Ok, we pressed D
 				xor eax, eax
-				mov al, [current_node]
-				mov edi, 0x9000
-				mov bh, [edi + eax] ; X pos
-				mov bl, [edi + 0x90 + eax]; Y pos
+				call load_pos
 				dec bh
 				inc al
-				mov [current_node], al
-				mov byte [edi + eax], bh
-				mov byte [edi + eax + 0x90], bl
+				call save_pos
 			jmp .next_stuff
 
 
@@ -99,6 +79,18 @@ main:
 		; finally print snake
 			call print_snake
 		jmp .gameloop
+
+load_pos:
+	mov al, [current_node]
+	mov edi, 0x9000
+	mov bh, [edi + eax]
+	mov bl, [edi + eax + 0x90]
+	ret
+save_pos:
+	mov [current_node], al
+	mov byte [edi + eax], bh
+	mov byte [edi + eax + 0x90], bl
+	ret
 
 ; ##########################
 ; #
