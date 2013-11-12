@@ -1,6 +1,11 @@
 [org 0x7c00]
 
 main:
+	xor ax, ax
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
 	mov esp, 0x9000
 
 	call clear_vidmem
@@ -20,6 +25,8 @@ main:
 
 
 	.gameloop:
+		cmp byte [snake_size], 0xfe
+		je won
 		; Get input character
 			xor ah, ah
 			int 0x16
@@ -75,6 +82,24 @@ main:
 			call print_snake
 			call draw_fruit
 		jmp .gameloop
+
+won:
+	xor bh, bh
+	mov ah, 0x02
+	mov dh, 10
+	mov dl, 10
+	int 0x10
+	mov si, cong_msg
+	.won_loop:
+		lodsb
+		or al, al
+		jz .won_end
+		mov ah, 0x0e
+		int 0x10
+		jmp .won_loop
+	.won_end:
+	cli
+	hlt
 
 load_pos:
 	mov cl, [current_node]
@@ -158,6 +183,8 @@ snake_size: db 1
 
 fruit_x: db 0
 fruit_y: db 0
+
+cong_msg db "Congratulations, you won!", 0
 
 %assign mysize 510-($-$$)
 %warning my size is mysize
